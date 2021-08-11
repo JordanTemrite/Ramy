@@ -306,13 +306,33 @@ library SafeMath {
 contract BulkSender {
     using SafeMath for uint256;
     
+    uint256 public txFee = 0.01 ether;
+    uint256 public memberFee = 0.5 ether;
+    
+    address payable feeWallet;
+    
+    mapping(address => bool) memberStatus;
+    
+    function setFeeWallet(address payable _wallet) public payable {
+        feeWallet = _wallet;
+    }
+    
+    receive() external payable {}
+
+    fallback() external payable {}
+    
+    function buyMembership() external payable {
+        require(msg.value >= memberFee);
+        require(feeWallet.send(msg.value));
+        memberStatus[msg.sender] = true;
+    }
     
     function bulksendToken(IERC20 _token, address[] calldata _to, uint256[] calldata _values) public  
-   {
-      require(_to.length == _values.length);
-      for (uint256 i = 0; i < _to.length; i++) {
-          require(_token.transferFrom(msg.sender, _to[i], _values[i]));
+    {
+        require(_to.length == _values.length);
+        for (uint256 i = 0; i < _to.length; i++) {
+        require(_token.transferFrom(msg.sender, _to[i], _values[i]));
         }
-   }
+    }
     
 }
