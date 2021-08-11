@@ -415,6 +415,10 @@ contract BulkSender is Ownable {
         memberFee = _amount;
     }
     
+    function addMember(address _toBeAdded) public onlyOwner {
+        memberStatus[_toBeAdded] = true;
+    }
+    
     function revokeMember(address _toBeRevoked) public onlyOwner {
         memberStatus[_toBeRevoked] = false;
     }
