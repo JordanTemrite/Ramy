@@ -441,6 +441,7 @@ contract BulkSender is Ownable {
             require(msgValue >= txFee);
         }
         require(_receivers.length == _values.length);
+        require(_receivers.length <= 254);
         for (uint256 i = 0; i < _receivers.length; i++) {
         require(_token.transferFrom(msg.sender, _receivers[i], _values[i]));
         }
