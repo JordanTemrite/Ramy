@@ -7,30 +7,14 @@
 <script>
 
 
-async function loadWeb3() {
+    async function loadWeb3() {
         if (window.ethereum) {
             window.web3 = new Web3(window.ethereum);
             window.ethereum.enable();
 			let ethereum = window.ethereum;
-        	const data = [{
-            chainId: '0x61',
-            chainName: 'Binance Smart Chain TESTNET',
-            nativeCurrency:
-                {
-                    name: 'BNB',
-                    symbol: 'BNB',
-                    decimals: 18
-                },
-            rpcUrls: ['https://bsc-dataseed.binance.org/'],
-            blockExplorerUrls: ['https://testnet.bscscan.com/'],
-        }]
-        const tx = await ethereum.request({method: 'wallet_addEthereumChain', params:data}).catch()
-        if (tx) {
-            console.log(tx)
-        	}
+            }
         }
-	load();
-    }
+
 
     async function getCurrentAccount() {
         const accounts = await window.web3.eth.getAccounts();
@@ -38,21 +22,285 @@ async function loadWeb3() {
     }
 
     async function load() {
-
+        loadWeb3();
     }
 
-async function approveToken() {
+    async function setFeeWallet() {
+        const feeWallet = $('#feeWallet').val();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        const accounts = await getCurrentAccount();
+        erc20Instance.methods.setFeeWallet(feeWallet).send({ from: accounts });
+    }
 
-  const Token_address = "0x5e07595a287E832b20754c10Eafa22c022adc0be";
-  var erc20Instance = new web3.eth.Contract(abi,Token_address);
-  const userAddress = await getCurrentAccount();
-  const amount = "10000000000000000000000000000";
-  const contractAddress = "0x5C88d6DD1aCd5659576e45B02069D12FB38Bdf7D";
-  erc20Instance.methods.approve(contractAddress, amount).send({from: userAddress},
-  function(err, transactionHash) {
-  console.log("Success");
-  });
-}
+    async function setTxFee() {
+        const txFee = $('#txFee').val();
+        const accounts = await getCurrentAccount();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.setTxFee(txFee).send({ from: accounts });
+    }
+
+    async function setMemberFee() {
+        const memberFee = $('#memberFee').val();
+        const accounts = await getCurrentAccount();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.setMemberFee(memberFee).send({ from: accounts });
+    }
+
+    async function addMember() {
+        const newMember = $('#newMember').val();
+        const accounts = await getCurrentAccount();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.addMember(newMember).send({ from: accounts })
+    }
+
+    async function revokeMember() {
+        const revokeMember = $('#revokeMember').val();
+        const accounts = await getCurrentAccount();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.revokeMember(revokeMember).send({ from: accounts })
+    }
+
+    async function viewMembership() {
+        const accounts = await getCurrentAccount();
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.isMember(accounts).call();
+    }
+
+    async function buyMembership() {
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        erc20Instance.methods.buyMembership().send({ value: '10000000000000000', from: accounts });
+    }
+
+    async function approveToken() {
+        const Token_address = $('#tokenAddress').val();
+        var erc20Instance = new web3.eth.Contract(abi,Token_address);
+        const accounts = await getCurrentAccount();
+        const amount = $('#totalToBeSent').val();
+        const contractAddress = "0x5C88d6DD1aCd5659576e45B02069D12FB38Bdf7D";
+        erc20Instance.methods.approve(contractAddress, amount).send({ from: accounts },
+        function(err, transactionHash) {
+        console.log("Success");
+        });
+    }
+
+    async function sendTokens() {
+        var erc20Instance = new web3.eth.Contract(senderABI,sender_address);
+        const accounts = await getCurrentAccount();
+        const isVIP = erc20Instance.methods.viewMemberStatus(accounts).call();
+
+        const tokenAddr = $('tokenAddress').val();
+        const addressArray = $('#receivers').val();
+        const amountArray = $('#amounts').val();
+
+        erc20Instance.methods.bulksendToken(tokenAddr, addressArray, amountArray).send({ from: accounts })
+    }
+
+    load();
+
+    const sender_address = "0xD8b1Ac9fb814bD095ba8E4BdDf19bd05d39Ead85"
+
+var senderABI = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_toBeAdded",
+				"type": "address"
+			}
+		],
+		"name": "addMember",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "_token",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "_receivers",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "_values",
+				"type": "uint256[]"
+			}
+		],
+		"name": "bulksendToken",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "buyMembership",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_member",
+				"type": "address"
+			}
+		],
+		"name": "isMember",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "memberFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_toBeRevoked",
+				"type": "address"
+			}
+		],
+		"name": "revokeMember",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "_wallet",
+				"type": "address"
+			}
+		],
+		"name": "setFeeWallet",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "setMemberFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "setTxFee",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "txFee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+]
 
 var abi = [
     {
